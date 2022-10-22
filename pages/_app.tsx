@@ -10,7 +10,8 @@ import {
   Box,
   LinearProgress,
   Link,
-  Stack
+  Stack,
+  Typography,
 } from "@mui/material";
 
 export interface Web3State {
@@ -102,17 +103,22 @@ function NextWeb3App({ Component, pageProps }: AppProps) {
               alignContent="center"
               alignItems="center"
             >
-              <LinearProgress  sx={{
-              width:"200px"
-            }} />
+              <LinearProgress
+                sx={{
+                  width: "200px",
+                }}
+              />
               {state.transactionHash && (
-                <Link
-                  variant="h5"
-                  href={`https://goerli.etherscan.io/tx/${state.transactionHash}`}
-                  target="_blank"
-                >
-                  {state.transactionHash}
-                </Link>
+                <Box>
+                  <Typography>Waiting transation to be mined...</Typography>
+                  <Link
+                    variant="h5"
+                    href={`https://goerli.etherscan.io/tx/${state.transactionHash}`}
+                    target="_blank"
+                  >
+                    {state.transactionHash}
+                  </Link>
+                </Box>
               )}
             </Stack>
           </Box>

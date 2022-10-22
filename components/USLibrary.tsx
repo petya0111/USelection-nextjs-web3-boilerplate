@@ -111,11 +111,18 @@ const USLibrary = ({ contractAddress }: USContract) => {
       <form>
         <label>
           State:
-          <input onChange={stateInput} value={name} type="text" name="state" />
+          <input
+            disabled={state.fetching}
+            onChange={stateInput}
+            value={name}
+            type="text"
+            name="state"
+          />
         </label>
         <label>
           BIDEN Votes:
           <input
+            disabled={state.fetching}
             onChange={bideVotesInput}
             value={votesBiden}
             type="number"
@@ -125,6 +132,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
         <label>
           TRUMP Votes:
           <input
+            disabled={state.fetching}
             onChange={trumpVotesInput}
             value={votesTrump}
             type="number"
@@ -134,6 +142,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
         <label>
           Seats:
           <input
+            disabled={state.fetching}
             onChange={seatsInput}
             value={stateSeats}
             type="number"
