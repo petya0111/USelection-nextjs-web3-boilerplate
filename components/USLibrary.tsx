@@ -20,6 +20,12 @@ const USLibrary = ({ contractAddress }: USContract) => {
   const { account, library } = useWeb3React<Web3Provider>();
   const usElectionContract = useUSElectionContract(contractAddress);
   const [currentLeader, setCurrentLeader] = useState<string>("Unknown");
+  const [currentVotesTrump, setCurrentVotesTrump] = useState<
+    number | undefined
+  >();
+  const [currentVotesBiden, setCurrentVotesBiden] = useState<
+    number | undefined
+  >();
   const [name, setName] = useState<string | undefined>();
   const [votesBiden, setVotesBiden] = useState<number | undefined>();
   const [votesTrump, setVotesTrump] = useState<number | undefined>();
@@ -27,6 +33,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
 
   useEffect(() => {
     getCurrentLeader();
+    getSeats();
   }, []);
 
   const getCurrentLeader = async () => {
@@ -38,6 +45,13 @@ const USLibrary = ({ contractAddress }: USContract) => {
         ? "Biden"
         : "Trump"
     );
+  };
+
+  const getSeats = async () => {
+    const trumpSeats = await usElectionContract.getPresidentSeats(Leader.TRUMP);
+    setCurrentVotesTrump(parseInt(trumpSeats.toString()));
+    const bidenSeats = await usElectionContract.getPresidentSeats(Leader.BIDEN);
+    setCurrentVotesBiden(parseInt(bidenSeats.toString()));
   };
 
   const stateInput = (input) => {
@@ -81,6 +95,8 @@ const USLibrary = ({ contractAddress }: USContract) => {
           messageType: "success",
           message: "Successfully submitted state result",
         });
+        getCurrentLeader();
+        getSeats();
       } else {
         dispatch({
           type: "fetched",
@@ -108,6 +124,15 @@ const USLibrary = ({ contractAddress }: USContract) => {
   return (
     <div className="results-form">
       <p>Current Leader is: {currentLeader}</p>
+      <div className="leader-results">
+        {currentVotesBiden !== undefined && currentVotesTrump !== undefined ? (
+          <span>
+            Trump seats: {currentVotesTrump} | Biden seats: {currentVotesBiden}
+          </span>
+        ) : (
+          <span></span>
+        )}
+      </div>
       <form>
         <label>
           State:
@@ -160,6 +185,9 @@ const USLibrary = ({ contractAddress }: USContract) => {
         .results-form {
           display: flex;
           flex-direction: column;
+        }
+        .leader-results {
+          margin-bottom: 20px;
         }
 
         .button-wrapper {
