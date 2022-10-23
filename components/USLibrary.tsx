@@ -3,6 +3,7 @@ import { useWeb3React } from "@web3-react/core";
 import { Web3Context } from "../pages/_app";
 import { useContext, useState, useEffect } from "react";
 import useUSElectionContract from "../hooks/useUSElectionContract";
+import { Typography } from "@mui/material";
 
 type USContract = {
   contractAddress: string;
@@ -30,10 +31,12 @@ const USLibrary = ({ contractAddress }: USContract) => {
   const [votesBiden, setVotesBiden] = useState<number | undefined>();
   const [votesTrump, setVotesTrump] = useState<number | undefined>();
   const [stateSeats, setStateSeats] = useState<number | undefined>();
+  const [electionEndedState, setElectionendedState] = useState<boolean>(false);
 
   useEffect(() => {
     getCurrentLeader();
     getSeats();
+    checkElectionEnded();
   }, []);
 
   const getCurrentLeader = async () => {
@@ -52,6 +55,11 @@ const USLibrary = ({ contractAddress }: USContract) => {
     setCurrentVotesTrump(parseInt(trumpSeats.toString()));
     const bidenSeats = await usElectionContract.getPresidentSeats(Leader.BIDEN);
     setCurrentVotesBiden(parseInt(bidenSeats.toString()));
+  };
+
+  const checkElectionEnded = async () => {
+    const isElectionEnded = await usElectionContract.electionEnded();
+    setElectionendedState(isElectionEnded);
   };
 
   const stateInput = (input) => {
@@ -85,7 +93,6 @@ const USLibrary = ({ contractAddress }: USContract) => {
     //   }
     // );
     dispatch({ type: "fetching" });
-    try {
       const tx = await usElectionContract.submitStateResult(result);
       dispatch({ type: "fetching", transactionHash: tx.hash });
       const transactionReceipt = await tx.wait();
@@ -97,6 +104,7 @@ const USLibrary = ({ contractAddress }: USContract) => {
         });
         getCurrentLeader();
         getSeats();
+        checkElectionEnded();
       } else {
         dispatch({
           type: "fetched",
@@ -104,13 +112,6 @@ const USLibrary = ({ contractAddress }: USContract) => {
           message: JSON.stringify(transactionReceipt),
         });
       }
-    } catch (e) {
-      dispatch({
-        type: "fetched",
-        messageType: "error",
-        message: e.error.message,
-      });
-    }
     resetForm();
   };
 
@@ -125,57 +126,64 @@ const USLibrary = ({ contractAddress }: USContract) => {
     <div className="results-form">
       <p>Current Leader is: {currentLeader}</p>
       <div className="leader-results">
-        {currentVotesBiden !== undefined && currentVotesTrump !== undefined ? (
-          <span>
+        {currentVotesBiden !== undefined && currentVotesTrump !== undefined && (
+          <div>
             Trump seats: {currentVotesTrump} | Biden seats: {currentVotesBiden}
-          </span>
-        ) : (
-          <span></span>
+          </div>
         )}
+        <div>
+        {electionEndedState ? (
+          <Typography>Election has ended.</Typography>
+        ) : (
+          <Typography>Election is open.</Typography>
+        )}
+        </div>
       </div>
-      <form>
-        <label>
-          State:
-          <input
-            disabled={state.fetching}
-            onChange={stateInput}
-            value={name}
-            type="text"
-            name="state"
-          />
-        </label>
-        <label>
-          BIDEN Votes:
-          <input
-            disabled={state.fetching}
-            onChange={bideVotesInput}
-            value={votesBiden}
-            type="number"
-            name="biden_votes"
-          />
-        </label>
-        <label>
-          TRUMP Votes:
-          <input
-            disabled={state.fetching}
-            onChange={trumpVotesInput}
-            value={votesTrump}
-            type="number"
-            name="trump_votes"
-          />
-        </label>
-        <label>
-          Seats:
-          <input
-            disabled={state.fetching}
-            onChange={seatsInput}
-            value={stateSeats}
-            type="number"
-            name="seats"
-          />
-        </label>
-        {/* <input type="submit" value="Submit" /> */}
-      </form>
+      {!electionEndedState && (
+        <form>
+          <label>
+            State:
+            <input
+              disabled={state.fetching}
+              onChange={stateInput}
+              value={name}
+              type="text"
+              name="state"
+            />
+          </label>
+          <label>
+            BIDEN Votes:
+            <input
+              disabled={state.fetching}
+              onChange={bideVotesInput}
+              value={votesBiden}
+              type="number"
+              name="biden_votes"
+            />
+          </label>
+          <label>
+            TRUMP Votes:
+            <input
+              disabled={state.fetching}
+              onChange={trumpVotesInput}
+              value={votesTrump}
+              type="number"
+              name="trump_votes"
+            />
+          </label>
+          <label>
+            Seats:
+            <input
+              disabled={state.fetching}
+              onChange={seatsInput}
+              value={stateSeats}
+              type="number"
+              name="seats"
+            />
+          </label>
+          {/* <input type="submit" value="Submit" /> */}
+        </form>
+      )}
       <div className="button-wrapper">
         <button disabled={state.fetching} onClick={submitStateResults}>
           Submit Results
