@@ -103,11 +103,6 @@ function NextWeb3App({ Component, pageProps }: AppProps) {
               alignContent="center"
               alignItems="center"
             >
-              <LinearProgress
-                sx={{
-                  width: "200px",
-                }}
-              />
               {state.transactionHash && (
                 <Box>
                   <Typography>Waiting transation to be mined...</Typography>
@@ -120,6 +115,11 @@ function NextWeb3App({ Component, pageProps }: AppProps) {
                   </Link>
                 </Box>
               )}
+              <LinearProgress
+                sx={{
+                  width: "200px",
+                }}
+              />
             </Stack>
           </Box>
         )}

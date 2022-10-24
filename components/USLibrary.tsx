@@ -32,11 +32,13 @@ const USLibrary = ({ contractAddress }: USContract) => {
   const [votesTrump, setVotesTrump] = useState<number | undefined>();
   const [stateSeats, setStateSeats] = useState<number | undefined>();
   const [electionEndedState, setElectionendedState] = useState<boolean>(false);
+  const [ownerIsLoggedIn, setOwnerIsLoggedIn] = useState<boolean>(false);
 
   useEffect(() => {
     getCurrentLeader();
     getSeats();
     checkElectionEnded();
+    checkIfOwnerContract();
   }, []);
 
   const getCurrentLeader = async () => {
@@ -48,6 +50,10 @@ const USLibrary = ({ contractAddress }: USContract) => {
         ? "Biden"
         : "Trump"
     );
+  };
+  const checkIfOwnerContract = async () => {
+    const ownerOfContract = await usElectionContract.owner();
+    setOwnerIsLoggedIn(account === ownerOfContract);
   };
 
   const getSeats = async () => {
@@ -78,6 +84,30 @@ const USLibrary = ({ contractAddress }: USContract) => {
     setStateSeats(input.target.value);
   };
 
+  const endElection = async () => {
+    dispatch({ type: "fetching" });
+    const tx = await usElectionContract.endElection();
+    dispatch({ type: "fetching", transactionHash: tx.hash });
+    const transactionReceipt = await tx.wait();
+    if (transactionReceipt.status === 1) {
+      dispatch({
+        type: "fetched",
+        messageType: "success",
+        message: "Successfully end election",
+      });
+      getCurrentLeader();
+      getSeats();
+      checkElectionEnded();
+    } else {
+      dispatch({
+        type: "fetched",
+        messageType: "error",
+        message: JSON.stringify(transactionReceipt),
+      });
+    }
+    resetForm();
+  };
+
   const submitStateResults = async () => {
     const result: any = [name, votesBiden, votesTrump, stateSeats];
     // filter events
@@ -93,25 +123,25 @@ const USLibrary = ({ contractAddress }: USContract) => {
     //   }
     // );
     dispatch({ type: "fetching" });
-      const tx = await usElectionContract.submitStateResult(result);
-      dispatch({ type: "fetching", transactionHash: tx.hash });
-      const transactionReceipt = await tx.wait();
-      if (transactionReceipt.status === 1) {
-        dispatch({
-          type: "fetched",
-          messageType: "success",
-          message: "Successfully submitted state result",
-        });
-        getCurrentLeader();
-        getSeats();
-        checkElectionEnded();
-      } else {
-        dispatch({
-          type: "fetched",
-          messageType: "error",
-          message: JSON.stringify(transactionReceipt),
-        });
-      }
+    const tx = await usElectionContract.submitStateResult(result);
+    dispatch({ type: "fetching", transactionHash: tx.hash });
+    const transactionReceipt = await tx.wait();
+    if (transactionReceipt.status === 1) {
+      dispatch({
+        type: "fetched",
+        messageType: "success",
+        message: "Successfully submitted state result",
+      });
+      getCurrentLeader();
+      getSeats();
+      checkElectionEnded();
+    } else {
+      dispatch({
+        type: "fetched",
+        messageType: "error",
+        message: JSON.stringify(transactionReceipt),
+      });
+    }
     resetForm();
   };
 
@@ -124,6 +154,15 @@ const USLibrary = ({ contractAddress }: USContract) => {
 
   return (
     <div className="results-form">
+      {ownerIsLoggedIn && (
+        <div>
+          {!electionEndedState && (
+            <button disabled={state.fetching} onClick={endElection}>
+              End election
+            </button>
+          )}
+        </div>
+      )}
       <p>Current Leader is: {currentLeader}</p>
       <div className="leader-results">
         {currentVotesBiden !== undefined && currentVotesTrump !== undefined && (
@@ -132,11 +171,11 @@ const USLibrary = ({ contractAddress }: USContract) => {
           </div>
         )}
         <div>
-        {electionEndedState ? (
-          <Typography>Election has ended.</Typography>
-        ) : (
-          <Typography>Election is open.</Typography>
-        )}
+          {electionEndedState ? (
+            <Typography> Election has ended.</Typography>
+          ) : (
+            <Typography>Election is open.</Typography>
+          )}
         </div>
       </div>
       {!electionEndedState && (
@@ -184,11 +223,13 @@ const USLibrary = ({ contractAddress }: USContract) => {
           {/* <input type="submit" value="Submit" /> */}
         </form>
       )}
-      <div className="button-wrapper">
-        <button disabled={state.fetching} onClick={submitStateResults}>
-          Submit Results
-        </button>
-      </div>
+      {!electionEndedState && (
+        <div className="button-wrapper">
+          <button disabled={state.fetching} onClick={submitStateResults}>
+            Submit Results
+          </button>
+        </div>
+      )}
       <style jsx>{`
         .results-form {
           display: flex;
