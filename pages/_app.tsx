@@ -12,6 +12,7 @@ import {
   Link,
   Stack,
   Typography,
+  Snackbar,
 } from "@mui/material";
 
 export interface Web3State {
@@ -35,7 +36,8 @@ export type Web3Action =
       web3Provider: any;
     }
   | { type: "fetching"; transactionHash?: string }
-  | { type: "fetched"; messageType?: AlertColor; message?: string };
+  | { type: "fetched"; messageType?: AlertColor; message?: string }
+  | { type: "removeMessage" };
 
 const initialState: Web3State = {
   fetching: false,
@@ -70,6 +72,9 @@ function web3Reducer(state: Web3State, action: Web3Action): Web3State {
         messageType: action.messageType,
       };
     }
+    case "removeMessage": {
+      return { ...state, messageType: undefined, message: undefined };
+    }
   }
 
   return state;
@@ -86,15 +91,25 @@ function NextWeb3App({ Component, pageProps }: AppProps) {
     <Web3Context.Provider value={{ state, dispatch }}>
       <Web3ReactProvider getLibrary={getLibrary}>
         <Component disabled={state.fetching} {...pageProps} />
+        <Snackbar
+          open={state.message !== undefined}
+          autoHideDuration={5000}
+          onClose={() => dispatch({ type: "removeMessage" })}
+        >
+          <Alert
+            onClose={() => dispatch({ type: "removeMessage" })}
+            severity={state.messageType}
+            sx={{ width: "100%" }}
+          >
+            {state.message}
+          </Alert>
+        </Snackbar>
         {state.fetching && (
           <Box
-            sx={{
-              height: "calc(100vh - 64px)",
-              display: "flex",
-              zIndex: 100,
-              justifyContent: "center",
-              alignContent: "center",
-              alignItems: "center",
+            style={{
+              position: "absolute",
+              bottom: 10,
+              width: "100%",
             }}
           >
             <Stack
