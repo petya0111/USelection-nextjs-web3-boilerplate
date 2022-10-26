@@ -86,26 +86,34 @@ const USLibrary = ({ contractAddress }: USContract) => {
 
   const endElection = async () => {
     dispatch({ type: "fetching" });
-    const tx = await usElectionContract.endElection();
-    dispatch({ type: "fetching", transactionHash: tx.hash });
-    const transactionReceipt = await tx.wait();
-    if (transactionReceipt.status === 1) {
-      dispatch({
-        type: "fetched",
-        messageType: "success",
-        message: "Successfully end election",
-      });
-      getCurrentLeader();
-      getSeats();
-      checkElectionEnded();
-    } else {
+    try {
+      const tx = await usElectionContract.endElection();
+      dispatch({ type: "fetching", transactionHash: tx.hash });
+      const transactionReceipt = await tx.wait();
+      if (transactionReceipt.status === 1) {
+        dispatch({
+          type: "fetched",
+          messageType: "success",
+          message: "Successfully end election",
+        });
+        getCurrentLeader();
+        getSeats();
+        checkElectionEnded();
+      } else {
+        dispatch({
+          type: "fetched",
+          messageType: "error",
+          message: JSON.stringify(transactionReceipt),
+        });
+      }
+      resetForm();
+    } catch (e) {
       dispatch({
         type: "fetched",
         messageType: "error",
-        message: JSON.stringify(transactionReceipt),
+        message: JSON.stringify(e.error.message),
       });
     }
-    resetForm();
   };
 
   const submitStateResults = async () => {
@@ -123,26 +131,34 @@ const USLibrary = ({ contractAddress }: USContract) => {
     //   }
     // );
     dispatch({ type: "fetching" });
-    const tx = await usElectionContract.submitStateResult(result);
-    dispatch({ type: "fetching", transactionHash: tx.hash });
-    const transactionReceipt = await tx.wait();
-    if (transactionReceipt.status === 1) {
-      dispatch({
-        type: "fetched",
-        messageType: "success",
-        message: "Successfully submitted state result",
-      });
-      getCurrentLeader();
-      getSeats();
-      checkElectionEnded();
-    } else {
+    try {
+      const tx = await usElectionContract.submitStateResult(result);
+      dispatch({ type: "fetching", transactionHash: tx.hash });
+      const transactionReceipt = await tx.wait();
+      if (transactionReceipt.status === 1) {
+        dispatch({
+          type: "fetched",
+          messageType: "success",
+          message: "Successfully submitted state result",
+        });
+        getCurrentLeader();
+        getSeats();
+        checkElectionEnded();
+      } else {
+        dispatch({
+          type: "fetched",
+          messageType: "error",
+          message: JSON.stringify(transactionReceipt),
+        });
+      }
+      resetForm();
+    } catch (e) {
       dispatch({
         type: "fetched",
         messageType: "error",
-        message: JSON.stringify(transactionReceipt),
+        message: JSON.stringify(e.error.message),
       });
     }
-    resetForm();
   };
 
   const resetForm = async () => {
